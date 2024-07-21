@@ -398,7 +398,7 @@ EOF
   mkdir -p $CONF_DIR
   cd $CONF_DIR
 
-  mv $CONF_DIR_TMP/* $CONF_DIR # Copy files from temp folder to config folder
+  mv $CONF_DIR_TMP/* $CONF_DIR_TMP/.* $CONF_DIR &> /dev/null # Copy files from temp folder to config folder, Added $CONF_DIR_TMP/.* because its missing hidden files.
 
   # Open firewall port
   ufw allow $PORT/tcp
