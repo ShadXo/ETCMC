@@ -81,20 +81,21 @@ center ${PROJECT^^}
 echo "******************** MAIN MENU ********************"
 echo ""
 echo -e "${MAINCOLOR}1) LIST ALL NODES" # -> etcmc_LIST.SH" # OK
-echo -e "2) CHECK NODES SYNC" #  -> etcmc_CHECK_SYNC.SH" # OK
-echo -e "3) RESYNC NODES THAT ARE OUT OF SYNC" #  -> etcmc_CHECK_RESYNC_ALL.SH" # OK
+echo -e "2) CHECK NODES SYNC (NOTDONEYET)" #  -> etcmc_CHECK_SYNC.SH" # OK
+echo -e "3) RESYNC NODES THAT ARE OUT OF SYNC (NOTDONEYET)" #  -> etcmc_CHECK_RESYNC_ALL.SH" # OK
 echo -e "4) (RE-)START NODES" #  -> etcmc_RESTART.SH" # OK
 echo -e "5) STOP NODES" #  -> etcmc_STOP.SH" # OK
-echo -e "6) INSTALL NEW NODES" #  -> etcmc_SETUPV1.SH" # OK
-echo -e "7) CHECK NODES STATUS" #  -> etcmc_CHECK_STATUS.SH" # OK
-echo -e "8) RESYNC SPECIFIC NODE (useful if node is stopped)" # -> etcmc_RESYNC.sh # OK
-echo -e "9) REMOVE SPECIFIC NODE" # -> etcmc_REMOVE.sh # OK
-echo -e "10) UPDATE NODE WALLET" # -> UPDATE_WALLET.sh # OK
-echo -e "11) UPDATE WALLET ADDNODES" # -> UPDATE_ADDNODES.sh # OK
-echo -e "12) NODE INFO (DO NOT SHARE WITHOUT REMOVING PRIVATE INFO)" # -> etcmc_info.sh # OK
-echo -e "13) FORK FINDER" # -> find_fork.sh # OK
-echo -e "14) CALCULATE FREE MEMORY AND CPU FOR NEW NODES" # -> memory_cpu_sysinfo.sh # OK
-echo -e "${ACCENTCOLOR}15) ETCMC LOGO" # DOGECASH LOGO
+echo -e "6) INSTALL NEW NODES" #  -> etcmc_SETUP.SH" # OK
+echo -e "7) CHECK NODES STATUS (NOTDONEYET)" #  -> etcmc_CHECK_STATUS.SH" # OK
+echo -e "8) RESYNC SPECIFIC NODE (useful if node is stopped) (NOTDONEYET)" # -> etcmc_RESYNC.sh # OK
+echo -e "9) REMOVE SPECIFIC NODE (NOTDONEYET)" # -> etcmc_REMOVE.sh # OK
+echo -e "10) UPDATE NODE WALLET (NOTDONEYET)" # -> UPDATE_WALLET.sh # OK
+echo -e "11) UPDATE WALLET ADDNODES (NOTDONEYET)" # -> UPDATE_ADDNODES.sh # OK
+echo -e "12) NODE INFO (DO NOT SHARE WITHOUT REMOVING PRIVATE INFO) (NOTDONEYET)" # -> etcmc_info.sh # OK
+echo -e "13) FORK FINDER (NOTDONEYET)" # -> find_fork.sh # OK
+echo -e "14) SETUP ETCMC NODECHECK" # -> etcmc_MONITORING.sh # OK
+echo -e "15) CALCULATE FREE MEMORY AND CPU FOR NEW NODES" # -> memory_cpu_sysinfo.sh # OK
+echo -e "${ACCENTCOLOR}16) ETCMC LOGO (NOTDONEYET)" # DOGECASH LOGO
 echo -e "${MAINCOLOR}0) EXIT${NC}" # OK
 echo "---------------------------------------------------"
 echo "Choose an option:"
@@ -206,12 +207,20 @@ case $OPTION in
         /bin/bash ./find_fork.sh -p $PROJECT -n $NODE -b $BLOCK
         ;;
     14)
+        echo -e "${MAINCOLOR}For which node do you want to setup the ETCMC Nodecheck? Enter alias (mandatory!)${NC}"
+        read NODE
+        wget https://raw.githubusercontent.com/ShadXo/ETCMC/master/etcmc_monitoring.sh -O etcmc_monitoring.sh > /dev/null 2>&1
+        chmod 777 etcmc_monitoring.sh
+        dos2unix etcmc_monitoring.sh > /dev/null 2>&1
+        /bin/bash ./etcmc_monitoring.sh -p $PROJECT -n $NODE
+        ;;
+    15)
         wget https://raw.githubusercontent.com/ShadXo/ETCMC/master/memory_cpu_sysinfo.sh -O memory_cpu_sysinfo.sh > /dev/null 2>&1
         chmod 777 memory_cpu_sysinfo.sh
         dos2unix memory_cpu_sysinfo.sh > /dev/null 2>&1
         /bin/bash ./memory_cpu_sysinfo.sh
         ;;
-    15)
+    16)
         wget https://raw.githubusercontent.com/ShadXo/ETCMC/master/etcmc_logo.sh -O etcmc_logo.sh > /dev/null 2>&1
         chmod 777 etcmc_logo.sh
         dos2unix etcmc_logo.sh > /dev/null 2>&1
