@@ -88,7 +88,7 @@ echo -e "5) STOP NODES" #  -> etcmc_STOP.SH" # OK
 echo -e "6) INSTALL NEW NODES" #  -> etcmc_SETUP.SH" # OK
 echo -e "7) CHECK NODES STATUS (NOTDONEYET)" #  -> etcmc_CHECK_STATUS.SH" # OK
 echo -e "8) RESYNC SPECIFIC NODE (useful if node is stopped) (NOTDONEYET)" # -> etcmc_RESYNC.sh # OK
-echo -e "9) REMOVE SPECIFIC NODE (NOTDONEYET)" # -> etcmc_REMOVE.sh # OK
+echo -e "9) REMOVE SPECIFIC NODE" # -> etcmc_REMOVE.sh # OK
 echo -e "10) UPDATE NODE WALLET (NOTDONEYET)" # -> UPDATE_WALLET.sh # OK
 echo -e "11) UPDATE WALLET ADDNODES (NOTDONEYET)" # -> UPDATE_ADDNODES.sh # OK
 echo -e "12) NODE INFO (DO NOT SHARE WITHOUT REMOVING PRIVATE INFO) (NOTDONEYET)" # -> etcmc_info.sh # OK
