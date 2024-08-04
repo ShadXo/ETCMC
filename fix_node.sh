@@ -75,25 +75,25 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   if [ "$GETHPID" ]; then
     echo "Stopping Geth of Node $NODEALIAS. Please wait ..."
     kill -SIGINT $GETHPID
-  fi
 
-  # Wait for the process to exit
-  while ps -p "$GETHPID" > /dev/null; do
-    #echo "Please wait ..."
-    sleep 2
-  done
+    # Wait for the process to exit
+    while ps -p "$GETHPID" > /dev/null; do
+      #echo "Please wait ..."
+      sleep 2
+    done
+  fi
 
   NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
   if [ "$NODEPID" ]; then
     echo "Stopping $NODEALIAS. Please wait ..."
     systemctl stop ${NAME}_$NODEALIAS.service
-  fi
 
-  # Wait for the process to exit
-  while ps -p "$NODEPID" > /dev/null; do
-    #echo "Please wait ..."
-    sleep 2
-  done
+    # Wait for the process to exit
+    while ps -p "$NODEPID" > /dev/null; do
+      #echo "Please wait ..."
+      sleep 2
+    done
+  fi
 done
 
 # Create Temp folder

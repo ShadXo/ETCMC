@@ -65,19 +65,25 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   if [ "$NODECHECKPID" ]; then
     echo "Stopping $NODEALIAS monitoring. Please wait ..."
     systemctl stop ${NAME}_$NODEALIAS.service
+
+    # Wait for the process to exit
+    while ps -p "$NODECHECKPID" > /dev/null; do
+      #echo "Please wait ..."
+      sleep 2
+    done
   fi
 
   NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'` # Correct for ETCMC_GETH
   if [ "$NODEPID" ]; then
     echo "Stopping $NODEALIAS. Please wait ..."
     systemctl stop ${NAME}_$NODEALIAS.service
-  fi
 
-  # Wait for the processes to exit
-  while ps -p "$NODEPID" > /dev/null || ps -p "$NODECHECKPID" > /dev/null; do
-    #echo "Please wait ..."
-    sleep 2
-  done
+    # Wait for the process to exit
+    while ps -p "$NODEPID" > /dev/null; do
+      #echo "Please wait ..."
+      sleep 2
+    done
+  fi
 
   echo "Removing conf folder"
   rm -rdf $NODECONFDIR
