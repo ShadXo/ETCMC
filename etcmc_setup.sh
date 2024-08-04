@@ -447,9 +447,10 @@ EOF
 
   # Crontab to Backup Balance file every 6h
   #0 */6 * * * cp /home/ETCMC/etcpow_balance_backup.txt.enc.bak /home/
-  PID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -v grep | awk '{print $2}'`
+  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -v grep | awk '{print $2}'` # Correct for geth
+  PID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'` # Correct for ETCMC_GETH
   if [ -z "$PID" ]; then
-    # start wallet
+    # start node
     echo "Starting $ALIAS."
     #sh ~/bin/${NAME}d_$ALIAS.sh
     systemctl start ${NAME}_$ALIAS.service
@@ -621,7 +622,7 @@ STOPPROCESS
   : << 'STARTPROCESS'
   SYNCNODEPID=`ps -ef | grep -i -w ${NAME}_$SYNCNODEALIAS | grep -i ${NAME}d | grep -v grep | awk '{print $2}'`
   if [ -z "$SYNCNODEPID" ] && [ "$SYNCNODEALIAS" ]; then
-    # start wallet
+    # start node
     echo "Starting $SYNCNODEALIAS."
     #sh ~/bin/${NAME}d_$SYNCNODEALIAS.sh
     systemctl start ${NAME}d_$SYNCNODEALIAS.service
@@ -629,9 +630,10 @@ STOPPROCESS
   fi
 STARTPROCESS
 
-  PID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -v grep | awk '{print $2}'`
+  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -v grep | awk '{print $2}'`
+  PID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
   if [ -z "$PID" ]; then
-    # start wallet
+    # start node
     echo "Starting $ALIAS."
     #sh ~/bin/${NAME}d_$ALIAS.sh
     systemctl start ${NAME}_$ALIAS.service

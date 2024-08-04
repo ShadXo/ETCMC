@@ -60,19 +60,23 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
     echo -ne "$(date -u --date @$(( date1 - $(date -u +%s) )) +%H:%M:%S)\r";
   done
 
-  for (( ; ; ))
-  do
-    NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -v grep | awk '{print $2}'`
-    if [ -z "$NODEPID" ]; then
-      echo ""
-      break
-    else
-      echo "Stopping $NODEALIAS. Please wait ..."
-      systemctl stop ${NAME}_$NODEALIAS-monitoring.service
-      systemctl stop ${NAME}_$NODEALIAS.service
-    fi
+  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | awk '{print $2}'` # Correct for geth
+  NODECHECKPID=`ps -ef | grep -i "sh check-node.sh" | grep -v grep | awk '{print $2}'` # Correct for ETCMC Nodecheck
+  if [ "$NODECHECKPID" ]; then
+    echo "Stopping $NODEALIAS monitoring. Please wait ..."
+    systemctl stop ${NAME}_$NODEALIAS.service
+  fi
+
+  NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'` # Correct for ETCMC_GETH
+  if [ "$NODEPID" ]; then
+    echo "Stopping $NODEALIAS. Please wait ..."
+    systemctl stop ${NAME}_$NODEALIAS.service
+  fi
+
+  # Wait for the processes to exit
+  while ps -p "$NODEPID" > /dev/null || ps -p "$NODECHECKPID" > /dev/null; do
     #echo "Please wait ..."
-    sleep 2 # wait 2 seconds
+    sleep 2
   done
 
   echo "Removing conf folder"
