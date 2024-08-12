@@ -64,12 +64,12 @@ fi
 echo
 echo "${NAME^^} - Node fixer"
 echo ""
-echo "Welcome to the ${NAME} Node fixer script."
-echo "The current script it downgrades geth to v1.12.19"
+echo "Welcome to the ${NAME} Node fix script."
+echo "The current script downgrades geth to v1.12.19"
 echo "Node v${NODEVERSION}"
 echo
 
-echo "This script will run when this timer reaches 0"
+echo "The Node fixer will run when this timer reaches 0"
 seconds=10
 date1=$(( $(date -u +%s) + seconds));
 echo "Press ctrl-c to stop"
