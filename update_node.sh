@@ -60,6 +60,15 @@ else
   exit 1
 fi
 
+# URL of ETCMC
+URL="https://etcmc.org"
+
+# Fetch the webpage content
+CONTENT=$(curl -s $URL)
+
+# Extract the version number
+NODEVERSION=$(echo "$CONTENT" | grep -oP '(?<=class="softwareVersion">)[^<]+' | sed 's/Client version //')
+
 ## MAIN
 echo
 echo "${NAME^^} - Node updater"
@@ -104,8 +113,8 @@ rm update.tar.gz update.zip &> /dev/null
 
 for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   NODEALIAS=$(echo $FILE | awk -F'[_]' '{print $2}')
-  VERSION=$(jq '.Version' .${NAME}_${NODEALIAS}/version.json)
   NODECONFDIR=~/.${NAME}_${NODEALIAS}
+  VERSION=$(jq -r '.Version' ${NODECONFDIR}/version.json)
 
   # Compare the versions using dpkg
   if dpkg --compare-versions "$VERSION" lt "$NODEVERSION"; then
@@ -143,7 +152,7 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   fi
 
   echo "Copying update files to $NODECONFDIR."
-  cp * $NODECONFDIR
+  cp -r * $NODECONFDIR
 
   GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | awk '{print $2}'`
   NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
