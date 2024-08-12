@@ -62,11 +62,21 @@ fi
 
 ## MAIN
 echo
-echo "${NAME^^} - Node updater"
+echo "${NAME^^} - Node fixer"
 echo ""
-echo "Welcome to the ${NAME} Node update script."
-echo "Wallet v${NODEVERSION}"
+echo "Welcome to the ${NAME} Node fixer script."
+echo "The current script it downgrades geth to v1.12.19"
+echo "Node v${NODEVERSION}"
 echo
+
+echo "This script will run when this timer reaches 0"
+seconds=10
+date1=$(( $(date -u +%s) + seconds));
+echo "Press ctrl-c to stop"
+while [ "${date1}" -ge "$(date -u +%s)" ]
+do
+  echo -ne "$(date -u --date @$(( date1 - $(date -u +%s) )) +%H:%M:%S)\r";
+done
 
 for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   NODEALIAS=$(echo $FILE | awk -F'[_]' '{print $2}')
@@ -100,7 +110,7 @@ done
 mkdir -p $CONF_DIR_TMP
 cd $CONF_DIR_TMP
 
-echo "Downloading Geth v1.12.19 "
+echo "Downloading Geth v1.12.19"
 GETHURL="https://github.com/etclabscore/core-geth/releases/download/v1.12.19/core-geth-linux-v1.12.19.zip"
 if [[ $GETHURL == *.tar.gz ]]; then
   wget ${GETHURL} -O geth.tar.gz
@@ -111,7 +121,7 @@ elif [[ $GETHURL == *.zip ]]; then
 fi
 
 if [ $WGET -ne 0 ]; then
-  echo -e "${RED}Wallet download failed, check the WALLETURL.${NC}"
+  echo -e "${RED}Download failed, check the GETHURL.${NC}"
   rm -rfd $CONF_DIR_TMP
   exit 1
 fi
@@ -128,7 +138,7 @@ chmod 775 *
 #find . -type f -exec mv -t . {} + &> /dev/null # Some coins have files in subfolders
 #mv ./bin/${NAME}* /usr/bin
 #mv ./bin/${NAME}* /usr/local/bin # previous /usr/bin should be /usr/local/bin
-rm setup.tar.gz setup.zip &> /dev/null
+rm geth.tar.gz geth.zip &> /dev/null
 
 for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   NODEALIAS=$(echo $FILE | awk -F'[_]' '{print $2}')
