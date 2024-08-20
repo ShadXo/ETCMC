@@ -81,7 +81,7 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   echo "${MONITORINGID}" | tr a-z A-Z > Etcmcnodecheck/etcmcnodemonitoringid.txt
 
   rm setup.tar.gz
-  mv $CONF_DIR_TMP/* $NODECONFDIR &> /dev/null # Copy files from temp folder to config folder
+  cp -r $CONF_DIR_TMP/* $NODECONFDIR &> /dev/null # Copy files from temp folder to config folder
   rm -rf $CONF_DIR_TMP
 
   echo "Creating systemd monitoring service for ${NAME}_$NODEALIAS"
