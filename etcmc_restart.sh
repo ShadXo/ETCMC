@@ -49,30 +49,37 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
 
   NODEALIAS=$(echo $FILE | awk -F'[_]' '{print $2}')
 
-  for (( ; ; ))
-  do
-    #NODEPID=`ps -ef | grep -i -w ${NAME}_$NODEALIAS | grep -i ${NAME}d | grep -v grep | awk '{print $2}'`
-    NODEPID=`ps -ef | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
-    if [ -z "$NODEPID" ]; then
-      echo ""
-      break
-    else
-      #STOP
-      echo "Stopping $NODEALIAS. Please wait ..."
-      systemctl stop ${NAME}_$NODEALIAS.service
-    fi
-    #echo "Please wait ..."
-    sleep 2 # wait 2 seconds
-  done
+  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | awk '{print $2}'`
+  if [ "$GETHPID" ]; then
+    echo "Stopping Geth of Node $NODEALIAS. Please wait ..."
+    kill -SIGINT $GETHPID
 
-  #NODEPID=`ps -ef | grep -i -w ${NAME}_$NODEALIAS | grep -i ${NAME}d | grep -v grep | awk '{print $2}'`
-  NODEPID=`ps -ef | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
+    # Wait for the process to exit
+    while ps -p "$GETHPID" > /dev/null; do
+      #echo "Please wait ..."
+      sleep 2
+    done
+  fi
+
+  NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
+  if [ "$NODEPID" ]; then
+    echo "Stopping $NODEALIAS. Please wait ..."
+    systemctl stop ${NAME}_$NODEALIAS.service
+
+    # Wait for the process to exit
+    while ps -p "$NODEPID" > /dev/null; do
+      #echo "Please wait ..."
+      sleep 2
+    done
+  fi
+
+  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | awk '{print $2}'`
+  NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
   if [ -z "$NODEPID" ]; then
-    # start wallet
     echo "Starting $NODEALIAS."
     systemctl start ${NAME}_$NODEALIAS.service
-    sleep 2 # wait 2 seconds
   fi
+  sleep 2 # wait 2 seconds
 
   #NODEPID=`ps -ef | grep -i -w ${NAME}_$NODEALIAS | grep -i ${NAME}d | grep -v grep | awk '{print $2}'`
   NODEPID=`ps -ef | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
