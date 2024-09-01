@@ -154,6 +154,29 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   echo "Copying update files to $NODECONFDIR."
   cp -r * $NODECONFDIR
 
+  echo "Checking requirements.txt for new or updated modules."
+  pip3 install -r $NODECONFDIR/requirements.txt --break-system-packages
+
+  if [ ! -f "/etc/systemd/system/${NAME}_$NODEALIAS-geth.service" ]; then
+    echo "Creating systemd service for ${NAME}_$NODEALIAS to shutdown geth"
+    cat << EOF > /etc/systemd/system/${NAME}_$NODEALIAS-geth.service
+[Unit]
+Description=Service for ${NAME}_$NODEALIAS to shutdown geth
+DefaultDependencies=no
+Before=shutdown.target reboot.target halt.target
+
+[Service]
+Type=oneshot
+ExecStart=pkill -SIGINT -f ${NAME}_$NODEALIAS/geth
+
+[Install]
+WantedBy=halt.target reboot.target shutdown.target
+EOF
+    systemctl daemon-reload
+    sleep 2 # wait 2 seconds
+    systemctl enable ${NAME}_$NODEALIAS-geth.service
+  fi
+
   GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | awk '{print $2}'`
   NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
   if [ -z "$NODEPID" ]; then
