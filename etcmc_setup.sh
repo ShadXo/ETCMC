@@ -420,21 +420,22 @@ EOF
     echo "Creating systemd service for ${NAME}_$ALIAS"
     cat << EOF > /etc/systemd/system/${NAME}_$ALIAS.service
 [Unit]
-Description=Node Service for ${NAME}_$ALIAS
+Description=Node Service for ${NAME}_$NODEALIAS
 After=network.target
+
 [Service]
 User=root
 Group=root
-Type=forking
+Type=simple
 WorkingDirectory=$CONF_DIR
-ExecStart=python3 Linux.py start --port 5000
-ExecStop=python3 Linux.py stop
+ExecStart=python3 ETCMC_GETH.py --port 5000
 Restart=always
 PrivateTmp=true
 TimeoutStopSec=60s
 TimeoutStartSec=10s
 StartLimitInterval=120s
 StartLimitBurst=5
+
 [Install]
 WantedBy=multi-user.target
 EOF

@@ -172,6 +172,29 @@ ExecStart=pkill -SIGINT -f ${NAME}_$NODEALIAS/geth
 [Install]
 WantedBy=halt.target reboot.target shutdown.target
 EOF
+
+echo "Updating systemd service for ${NAME}_$NODEALIAS"
+cat << EOF > /etc/systemd/system/${NAME}_$NODEALIAS.service
+[Unit]
+Description=Node Service for ${NAME}_$NODEALIAS
+After=network.target
+
+[Service]
+User=root
+Group=root
+Type=simple
+WorkingDirectory=$NODECONFDIR
+ExecStart=python3 ETCMC_GETH.py --port 5000
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=10s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
     systemctl daemon-reload
     sleep 2 # wait 2 seconds
     systemctl enable ${NAME}_$NODEALIAS-geth.service
