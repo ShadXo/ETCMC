@@ -152,7 +152,14 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   fi
 
   echo "Copying update files to $NODECONFDIR."
-  cp -r * $NODECONFDIR
+  if [ -d "update_files_linux" ]; then
+    cp -r update_files_linux/* $NODECONFDIR
+  else
+    cp -r * $NODECONFDIR
+  fi
+
+  #Remove update_files_linux folder, sometimes created before applying a fix
+  rm -rf $NODECONFDIR/update_files_linux &> /dev/null
 
   echo "Checking requirements.txt for new or updated modules."
   pip3 install -r $NODECONFDIR/requirements.txt --break-system-packages
