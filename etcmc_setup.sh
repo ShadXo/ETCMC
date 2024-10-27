@@ -420,7 +420,7 @@ EOF
     echo "Creating systemd service for ${NAME}_$ALIAS"
     cat << EOF > /etc/systemd/system/${NAME}_$ALIAS.service
 [Unit]
-Description=Node Service for ${NAME}_$NODEALIAS
+Description=Node Service for ${NAME}_$ALIAS
 After=network.target
 
 [Service]
