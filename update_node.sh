@@ -164,6 +164,10 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   echo "Checking requirements.txt for new or updated modules."
   pip3 install -r $NODECONFDIR/requirements.txt --break-system-packages
 
+  # Set permissions for files
+  echo "Setting permissions for files..."
+  chmod +x $NODECONFDIR/Linux.py $NODECONFDIR/ETCMC_GETH.py $NODECONFDIR/updater.py $NODECONFDIR/geth
+
   echo "Creating systemd service for ${NAME}_$NODEALIAS to shutdown geth"
   cat << EOF > /etc/systemd/system/${NAME}_$NODEALIAS-geth.service
 [Unit]
