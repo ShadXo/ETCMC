@@ -140,6 +140,7 @@ fi
 
 echo -e "${YELLOW}Do you want to install all needed dependencies (no if you did it before, yes if you are installing your first node)? [y/n]${NC}"
 read DOSETUP
+DOSETUP="y" # For now always do setup, for ETCMC Nodes.
 
 if [[ ${DOSETUP,,} =~ "y" ]]; then
   apt-get update
