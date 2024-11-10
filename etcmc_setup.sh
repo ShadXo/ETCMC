@@ -411,7 +411,7 @@ EOF
 
   # Set permissions for files
   echo "Setting permissions for files..."
-  chmod +x Linux.py ETCMC_GETH.py geth
+  chmod +x Linux.py ETCMC_GETH.py updater.py geth
 
   if [[ ${REBOOTRESTART,,} =~ "y" ]] ; then
     #DAEMONSYSTEMDFILE="/etc/systemd/system/${NAME}_$ALIAS.service"
