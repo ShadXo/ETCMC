@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Execute getopt
-ARGS=$(getopt -o "p:n:" -l "project:,node:" -n "$0" -- "$@");
+ARGS=$(getopt -o "p:n:" -l "project:,node:,mid:,monitoringid:" -n "$0" -- "$@");
 
 eval set -- "$ARGS";
 
@@ -20,6 +20,14 @@ while true; do
                     if [ -n "$1" ];
                     then
                         ALIAS="$1";
+                        shift;
+                    fi
+            ;;
+        --mid |--monitoringid)
+            shift;
+                    if [ -n "$1" ];
+                    then
+                        MONITORINGID="$1";
                         shift;
                     fi
             ;;
@@ -64,8 +72,12 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   echo "*******************************************"
   echo "FILE: $FILE"
 
-  echo -e "${YELLOW}Provide the Monitoring ID for node $ALIAS, followed by [ENTER]:${NC}"
-  read MONITORINGID
+  #echo -e "${YELLOW}Provide the Monitoring ID for node $ALIAS, followed by [ENTER]:${NC}"
+  #read MONITORINGID
+  if [ -z "$MONITORINGID" ]; then
+    echo -e "${YELLOW}Provide the Monitoring ID for node $ALIAS, followed by [ENTER]:${NC}"
+    read MONITORINGID
+  fi
 
   NODEALIAS=$(echo $FILE | awk -F'[_]' '{print $2}')
   NODECONFDIR=~/.${NAME}_${NODEALIAS}
