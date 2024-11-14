@@ -642,10 +642,10 @@ STARTPROCESS
     sleep 2 # wait 2 seconds
   fi
 
-  if [[ $NODEIP =~ .*:.* ]]; then
-    MNCONFIG=$(echo $ALIAS [$PUBIPv6]:$PORT "http://$PUBIPv6:$RPCPORT")
+  if [[ $IP =~ .*:.* ]]; then
+    MNCONFIG=$(echo $ALIAS [$IP]:$PORT "http://$IP:$RPCPORT")
   else
-    MNCONFIG=$(echo $ALIAS $PUBIPv4:$PORT "http://$PUBIPv4:$RPCPORT")
+    MNCONFIG=$(echo $ALIAS $IP:$PORT "http://$IP:$RPCPORT")
   fi
   echo $MNCONFIG >> ~/bin/node_config.txt
 
