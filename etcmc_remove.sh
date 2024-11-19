@@ -64,7 +64,7 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   NODECHECKPID=`ps -ef | grep -i "sh check-node.sh" | grep -v grep | awk '{print $2}'` # Correct for ETCMC Nodecheck
   if [ "$NODECHECKPID" ]; then
     echo "Stopping $NODEALIAS monitoring. Please wait ..."
-    systemctl stop ${NAME}_$NODEALIAS.service
+    systemctl stop ${NAME}_$NODEALIAS-monitoring.service
 
     # Wait for the process to exit
     while ps -p "$NODECHECKPID" > /dev/null; do
