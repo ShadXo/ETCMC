@@ -418,6 +418,21 @@ EOF
     #DAEMONSYSTEMDFILE="/etc/systemd/system/${NAME}_$ALIAS.service"
     #if [[ ! -f "${DAEMONSYSTEMDFILE}" ]]; then
     #fi
+    echo "Creating systemd service for ${NAME}_$ALIAS to shutdown geth"
+    cat << EOF > /etc/systemd/system/${NAME}_$ALIAS-geth.service
+[Unit]
+Description=Service for ${NAME}_$ALIAS to shutdown geth
+DefaultDependencies=no
+Before=shutdown.target reboot.target halt.target
+
+[Service]
+Type=oneshot
+ExecStart=pkill -SIGINT -f ${NAME}_$ALIAS/geth
+
+[Install]
+WantedBy=halt.target reboot.target shutdown.target
+EOF
+
     echo "Creating systemd service for ${NAME}_$ALIAS"
     cat << EOF > /etc/systemd/system/${NAME}_$ALIAS.service
 [Unit]
