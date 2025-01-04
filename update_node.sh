@@ -162,7 +162,7 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   rm -rf $NODECONFDIR/update_files_linux &> /dev/null
 
   echo "Checking requirements.txt for new or updated modules."
-  pip3 install -r $NODECONFDIR/requirements.txt --break-system-packages
+  pip3 install -r $NODECONFDIR/requirements.txt --break-system-packages --ignore-installed # Added --ignore-installed, latest Ubuntu patches adds cryptography 41.0.7, which you cant uninstall.
 
   # Set permissions for files
   echo "Setting permissions for files..."

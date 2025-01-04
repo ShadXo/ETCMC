@@ -408,7 +408,7 @@ EOF
   # Install required packages
   echo "Installing required packages..."
   #pip3 install -r requirements.txt || pip3 install -r requirements.txt --break-system-packages
-  pip3 install -r requirements.txt --break-system-packages
+  pip3 install -r requirements.txt --break-system-packages --ignore-installed # Added --ignore-installed, latest Ubuntu patches adds cryptography 41.0.7, which you cant uninstall.
 
   # Set permissions for files
   echo "Setting permissions for files..."
