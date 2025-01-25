@@ -130,7 +130,7 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | grep -v bash | awk '{print $2}'`
   if [ "$GETHPID" ]; then
     echo "Stopping Geth of Node $NODEALIAS. Please wait ..."
-    kill -SIGINT $GETHPID
+    kill -INT $GETHPID
 
     # Wait for the process to exit
     while ps -p "$GETHPID" > /dev/null; do
