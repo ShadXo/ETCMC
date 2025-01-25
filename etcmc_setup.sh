@@ -464,7 +464,7 @@ EOF
 
   # Crontab to Backup Balance file every 6h
   #0 */6 * * * cp /home/ETCMC/etcpow_balance_backup.txt.enc.bak /home/
-  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -v grep | awk '{print $2}'` # Correct for geth
+  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -v grep | grep -v bash | awk '{print $2}'` # Correct for geth
   PID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'` # Correct for ETCMC_GETH
   if [ -z "$PID" ]; then
     # start node
@@ -647,7 +647,7 @@ STOPPROCESS
   fi
 STARTPROCESS
 
-  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -v grep | awk '{print $2}'`
+  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -v grep | grep -v bash | awk '{print $2}'`
   PID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
   if [ -z "$PID" ]; then
     # start node

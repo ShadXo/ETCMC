@@ -49,7 +49,7 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
 
   NODEALIAS=$(echo $FILE | awk -F'[_]' '{print $2}')
 
-  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | awk '{print $2}'`
+  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | grep -v bash | awk '{print $2}'`
   if [ "$GETHPID" ]; then
     echo "Stopping Geth of Node $NODEALIAS. Please wait ..."
     kill -SIGINT $GETHPID
@@ -73,7 +73,6 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
     done
   fi
 
-  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | awk '{print $2}'`
   NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
   if [ -z "$NODEPID" ]; then
     echo "Starting $NODEALIAS."
