@@ -484,9 +484,9 @@ EOF
   # Crontab to Backup Balance file every 6h
   #0 */6 * * * cp /home/ETCMC/etcpow_balance_backup.txt.enc.bak /home/
 
-  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -v grep | grep -v bash | awk '{print $2}'` # Correct for geth
-  PID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'` # Correct for ETCMC_GETH
-  if [ -z "$PID" ]; then
+  GETHPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -i -w geth | grep -v grep | grep -v bash | awk '{print $2}')
+  NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}' | head -1) # Since version 2.7.0 there are multiple processes, get the first match.
+  if [ -z "$NODEPID" ]; then
     # start node
     echo "Starting $ALIAS."
     #sh ~/bin/${NAME}d_$ALIAS.sh
@@ -494,7 +494,7 @@ EOF
     sleep 2 # wait 2 seconds
   fi
 
-  if [ -z "$PID" ] && [ "$ADDNODESURL" ]; then
+  if [ -z "$NODEPID" ] && [ "$ADDNODESURL" ]; then
     if [ "$EXPLORERAPI" == "BLOCKBOOK" ]; then
       if [ "$NAME" == "dogecash" ]; then
         ADDNODES=$( curl -s https://api.dogecash.org/api/v1/network/peers | jq -r ".result" | jq -r '.[]' )
@@ -527,7 +527,7 @@ EOF
     fi
   fi
 
-  if [ -z "$PID" ]; then
+  if [ -z "$NODEPID" ]; then
     CHECKNODE="*"
     echo "Checking available nodes to use for a faster sync."
     for FILE in $(ls -d ~/.${NAME}_$CHECKNODE | sort -V); do
@@ -603,7 +603,7 @@ EOF
     done
 STOPPROCESS
 
-    if [ -z "$PID" ] && [ "$SYNCNODEALIAS" ]; then
+    if [ -z "$NODEPID" ] && [ "$SYNCNODEALIAS" ]; then
       # Copy this Daemon.
       echo "Copy BLOCKCHAIN from ~/.${NAME}_${SYNCNODEALIAS} to ~/.${NAME}_${ALIAS}."
       rm -R $CONF_DIR/database &> /dev/null
@@ -614,7 +614,7 @@ STOPPROCESS
       cp -r $SYNCNODECONFDIR/blocks $CONF_DIR &> /dev/null
       cp -r $SYNCNODECONFDIR/sporks $CONF_DIR &> /dev/null
       cp -r $SYNCNODECONFDIR/chainstate $CONF_DIR &> /dev/null
-    elif [ -z "$PID" ] && [ "$BOOTSTRAPURL" ]; then
+    elif [ -z "$NODEPID" ] && [ "$BOOTSTRAPURL" ]; then
       cd $CONF_DIR_TMP
       if [ ! -f "bootstrap.tar.gz" ] && [[ $BOOTSTRAPURL == *.tar.gz ]]; then
         echo "Downloading bootstrap"
@@ -667,9 +667,9 @@ STOPPROCESS
   fi
 STARTPROCESS
 
-  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -v grep | grep -v bash | awk '{print $2}'`
-  PID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
-  if [ -z "$PID" ]; then
+  GETHPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -i -w geth | grep -v grep | grep -v bash | awk '{print $2}')
+  NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}' | head -1) # Since version 2.7.0 there are multiple processes, get the first match.
+  if [ -z "$NODEPID" ]; then
     # start node
     echo "Starting $ALIAS."
     #sh ~/bin/${NAME}d_$ALIAS.sh

@@ -60,8 +60,8 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
     echo -ne "$(date -u --date @$(( date1 - $(date -u +%s) )) +%H:%M:%S)\r";
   done
 
-  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | awk '{print $2}'` # Correct for geth
-  NODECHECKPID=`ps -ef | grep -i "sh check-node.sh" | grep -v grep | awk '{print $2}'` # Correct for ETCMC Nodecheck
+  GETHPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w geth | grep -v grep | grep -v bash | awk '{print $2}')
+  NODECHECKPID=$(ps -ef | grep -i "sh check-node.sh" | grep -v grep | awk '{print $2}') # Correct for ETCMC Nodecheck
   if [ "$NODECHECKPID" ]; then
     echo "Stopping $NODEALIAS monitoring. Please wait ..."
     systemctl stop ${NAME}_$NODEALIAS-monitoring.service
@@ -73,7 +73,7 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
     done
   fi
 
-  NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'` # Correct for ETCMC_GETH
+  NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}' | head -1) # Since version 2.7.0 there are multiple processes, get the first match.
   if [ "$NODEPID" ]; then
     echo "Stopping $NODEALIAS. Please wait ..."
     systemctl stop ${NAME}_$NODEALIAS.service

@@ -127,7 +127,7 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
     break
   fi
 
-  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | grep -v bash | awk '{print $2}'`
+  GETHPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w geth | grep -v grep | grep -v bash | awk '{print $2}')
   if [ "$GETHPID" ]; then
     echo "Stopping Geth of Node $NODEALIAS. Please wait ..."
     kill -INT $GETHPID
@@ -139,7 +139,7 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
     done
   fi
 
-  NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
+  NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}' | head -1) # Since version 2.7.0 there are multiple processes, get the first match.
   if [ "$NODEPID" ]; then
     echo "Stopping $NODEALIAS. Please wait ..."
     systemctl stop ${NAME}_$NODEALIAS.service
@@ -222,8 +222,8 @@ EOF
   systemctl enable ${NAME}_$NODEALIAS-geth.service
   systemctl enable ${NAME}_$NODEALIAS.service
 
-  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | awk '{print $2}'`
-  NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
+  GETHPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w geth | grep -v grep | grep -v bash | awk '{print $2}')
+  NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}' | head -1) # Since version 2.7.0 there are multiple processes, get the first match.
   if [ -z "$NODEPID" ]; then
     echo "Starting $NODEALIAS."
     systemctl start ${NAME}_$NODEALIAS.service

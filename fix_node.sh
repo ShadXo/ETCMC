@@ -81,7 +81,7 @@ done
 for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   NODEALIAS=$(echo $FILE | awk -F'[_]' '{print $2}')
 
-  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | awk '{print $2}'`
+  GETHPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w geth | grep -v grep | grep -v bash | awk '{print $2}')
   if [ "$GETHPID" ]; then
     echo "Stopping Geth of Node $NODEALIAS. Please wait ..."
     kill -SIGINT $GETHPID
@@ -93,7 +93,7 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
     done
   fi
 
-  NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
+  NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}' | head -1) # Since version 2.7.0 there are multiple processes, get the first match.
   if [ "$NODEPID" ]; then
     echo "Stopping $NODEALIAS. Please wait ..."
     systemctl stop ${NAME}_$NODEALIAS.service
@@ -147,8 +147,8 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   echo "Copying geth to $NODECONFDIR."
   cp geth $NODECONFDIR
 
-  GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | awk '{print $2}'`
-  NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
+  GETHPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w geth | grep -v grep | grep -v bash | awk '{print $2}')
+  NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}' | head -1) # Since version 2.7.0 there are multiple processes, get the first match.
   if [ -z "$NODEPID" ]; then
     echo "Starting $NODEALIAS."
     systemctl start ${NAME}_$NODEALIAS.service
