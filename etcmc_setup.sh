@@ -57,11 +57,20 @@ else
   exit 1
 fi
 
+# URL for ETCMC Version check
+URL="https://raw.githubusercontent.com/Nowalski/ETCMC_Client-2.0/main/version.json"
+
+# Fetch the webpage content
+CONTENT=$(curl -s $URL)
+
+# Extract the version number
+VERSION=$(echo "$CONTENT" | jq -r '.Version')
+
 cd ~
 echo "******************************************************************************"
 echo "* Ubuntu 22.04 or newer operating system is recommended for this install.    *"
 echo "*                                                                            *"
-echo "* This script will install and configure your ${NAME^^} nodes (v${NODEVERSION}).*"
+echo "* This script will install and configure your ${NAME^^} nodes (v${VERSION}).*"
 echo "******************************************************************************"
 echo && echo && echo
 echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
@@ -146,7 +155,7 @@ if [[ ${DOSETUP,,} =~ "y" ]]; then
   apt-get update
   apt-get -y upgrade
   apt-get -y dist-upgrade
-  apt-get install -y python3 python3-pip
+  #apt-get install -y python3 python3-pip # Not needed anymore since version 2.7.0, can be removed on the next cleanup.
   apt-get install -y nano htop git
   #apt-get install -y dos2unix
   apt-get install -y unzip
@@ -174,7 +183,7 @@ if [[ ${DOSETUP,,} =~ "y" ]]; then
    mkdir -p $CONF_DIR_TMP
 
    cd $CONF_DIR_TMP
-   echo "Downloading wallet"
+   echo "Downloading the latest files"
    if [[ $SETUPURL == *.tar.gz ]]; then
      wget ${SETUPURL} -O setup.tar.gz
      WGET=$?
@@ -399,20 +408,30 @@ EOF
   mkdir -p $CONF_DIR
   cd $CONF_DIR
 
-  mv $CONF_DIR_TMP/* $CONF_DIR_TMP/.* $CONF_DIR &> /dev/null # Copy files from temp folder to config folder, Added $CONF_DIR_TMP/.* because its missing hidden files.
+  echo "Copying files to $CONF_DIR."
+  #mv $CONF_DIR_TMP/* $CONF_DIR_TMP/.* $CONF_DIR &> /dev/null # Copy files from temp folder to config folder, Added $CONF_DIR_TMP/.* because its missing hidden files.
+  cp -rT $CONF_DIR_TMP $CONF_DIR # Copy files from temp folder to config folder.
 
   # Open firewall port
   ufw allow $PORT/tcp
   ufw allow $RPCPORT/tcp
 
   # Install required packages
-  echo "Installing required packages..."
-  #pip3 install -r requirements.txt || pip3 install -r requirements.txt --break-system-packages
-  pip3 install -r requirements.txt --break-system-packages --ignore-installed # Added --ignore-installed, latest Ubuntu patches adds cryptography 41.0.7, which you cant uninstall.
+  #echo "Installing required packages..."
+  #pip3 install -r requirements.txt --break-system-packages --ignore-installed # Added --ignore-installed, latest Ubuntu patches adds cryptography 41.0.7, which you cant uninstall. Not needed anymore since update 2.7.0 (One file, which includes all the prereqs), can be removed on the next cleanup.
 
   # Set permissions for files
   echo "Setting permissions for files..."
-  chmod +x Linux.py ETCMC_GETH.py updater.py geth
+  chmod +x Linux.py ETCMC_GETH geth
+
+  # Set login required to false
+  echo "Setting login required to false"
+  if [ ! -f login.json ]; then
+    echo '{"login_required": false}' > login.json
+  else
+    jq '.login_required = false' login.json > login_temp.json && mv login_temp.json login.json
+    #sed -i 's/"login_required": true/"login_required": false/' login.json
+  fi
 
   if [[ ${REBOOTRESTART,,} =~ "y" ]] ; then
     #DAEMONSYSTEMDFILE="/etc/systemd/system/${NAME}_$ALIAS.service"
@@ -444,7 +463,7 @@ User=root
 Group=root
 Type=simple
 WorkingDirectory=$CONF_DIR
-ExecStart=python3 ETCMC_GETH.py --port 5000
+ExecStart=$CONF_DIR/ETCMC_GETH --port 5000
 Restart=always
 PrivateTmp=true
 TimeoutStopSec=60s
@@ -464,6 +483,7 @@ EOF
 
   # Crontab to Backup Balance file every 6h
   #0 */6 * * * cp /home/ETCMC/etcpow_balance_backup.txt.enc.bak /home/
+
   GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -v grep | grep -v bash | awk '{print $2}'` # Correct for geth
   PID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'` # Correct for ETCMC_GETH
   if [ -z "$PID" ]; then

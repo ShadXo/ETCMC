@@ -60,21 +60,21 @@ else
   exit 1
 fi
 
-# URL of ETCMC
-URL="https://etcmc.org"
+# URL for ETCMC Version check
+URL="https://raw.githubusercontent.com/Nowalski/ETCMC_Client-2.0/main/version.json"
 
 # Fetch the webpage content
 CONTENT=$(curl -s $URL)
 
 # Extract the version number
-NODEVERSION=$(echo "$CONTENT" | grep -oP '(?<=class="softwareVersion">)[^<]+' | sed 's/Client version //')
+VERSION=$(echo "$CONTENT" | jq -r '.Version')
 
 ## MAIN
 echo
 echo "${NAME^^} - Node updater"
 echo ""
 echo "Welcome to the ${NAME} Node update script."
-echo "Node v${NODEVERSION}"
+echo "Node v${VERSION}"
 echo
 
 # Create Temp folder
@@ -114,16 +114,16 @@ rm update.tar.gz update.zip &> /dev/null
 for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   NODEALIAS=$(echo $FILE | awk -F'[_]' '{print $2}')
   NODECONFDIR=~/.${NAME}_${NODEALIAS}
-  VERSION=$(jq -r '.Version' ${NODECONFDIR}/version.json)
+  NODEVERSION=$(jq -r '.Version' ${NODECONFDIR}/version.json)
 
   # Compare the versions using dpkg
-  if dpkg --compare-versions "$VERSION" lt "$NODEVERSION"; then
-    echo "$NODEALIAS is running a lower node version $VERSION, updating this node to the latest version $NODEVERSION."
-  elif [ "$VERSION" = "$NODEVERSION" ]; then
+  if dpkg --compare-versions "$NODEVERSION" lt "$VERSION"; then
+    echo "$NODEALIAS is running a lower node version $NODEVERSION, updating this node to the latest version $VERSION."
+  elif [ "$NODEVERSION" = "$VERSION" ]; then
     echo "$NODEALIAS is already running the latest version $VERSION. Skipping this node."
     break
   else
-    echo "$NODEALIAS is running $VERSION, this version is unknown or not supported yet."
+    echo "$NODEALIAS is running $NODEVERSION, this version is unknown or not supported yet."
     break
   fi
 
@@ -151,22 +151,34 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
     done
   fi
 
-  echo "Copying update files to $NODECONFDIR."
-  if [ -d "update_files_linux" ]; then
-    cp -r update_files_linux/* $NODECONFDIR
+  # Configure config folder
+  cd $NODECONFDIR
+
+  echo "Copying files to $NODECONFDIR."
+  if [ -d "$CONF_DIR_TMP/update_files_linux" ]; then
+    cp -rT $CONF_DIR_TMP/update_files_linux $NODECONFDIR
   else
-    cp -r * $NODECONFDIR
+    cp -rT $CONF_DIR_TMP $NODECONFDIR
   fi
 
   #Remove update_files_linux folder, sometimes created before applying a fix
-  rm -rf $NODECONFDIR/update_files_linux &> /dev/null
+  #rm -rf update_files_linux &> /dev/null # Not needed anymore, can be removed on the next cleanup.
 
-  echo "Checking requirements.txt for new or updated modules."
-  pip3 install -r $NODECONFDIR/requirements.txt --break-system-packages --ignore-installed # Added --ignore-installed, latest Ubuntu patches adds cryptography 41.0.7, which you cant uninstall.
+  #echo "Checking requirements.txt for new or updated modules."
+  #pip3 install -r requirements.txt --break-system-packages --ignore-installed # Added --ignore-installed, latest Ubuntu patches adds cryptography 41.0.7, which you cant uninstall. Not needed anymore since update 2.7.0 (One file, which includes all the prereqs), can be removed on the next cleanup.
 
   # Set permissions for files
   echo "Setting permissions for files..."
-  chmod +x $NODECONFDIR/Linux.py $NODECONFDIR/ETCMC_GETH.py $NODECONFDIR/updater.py $NODECONFDIR/geth
+  chmod +x Linux.py ETCMC_GETH geth
+
+  # Set login required to false
+  echo "Setting login required to false"
+  if [ ! -f login.json ]; then
+    echo '{"login_required": false}' > login.json
+  else
+    jq '.login_required = false' login.json > login_temp.json && mv login_temp.json login.json
+    #sed -i 's/"login_required": true/"login_required": false/' login.json
+  fi
 
   echo "Creating systemd service for ${NAME}_$NODEALIAS to shutdown geth"
   cat << EOF > /etc/systemd/system/${NAME}_$NODEALIAS-geth.service
@@ -194,7 +206,7 @@ User=root
 Group=root
 Type=simple
 WorkingDirectory=$NODECONFDIR
-ExecStart=python3 ETCMC_GETH.py --port 5000
+ExecStart=$NODECONFDIR/ETCMC_GETH --port 5000
 Restart=always
 PrivateTmp=true
 TimeoutStopSec=60s
@@ -208,6 +220,7 @@ EOF
   systemctl daemon-reload
   sleep 2 # wait 2 seconds
   systemctl enable ${NAME}_$NODEALIAS-geth.service
+  systemctl enable ${NAME}_$NODEALIAS.service
 
   GETHPID=`ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -v grep | awk '{print $2}'`
   NODEPID=`ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}'`
