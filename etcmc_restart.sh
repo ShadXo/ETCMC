@@ -62,6 +62,7 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   fi
 
   NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}' | head -1) # Since version 2.7.0 there are multiple processes, get the first match.
+  dpkg --compare-versions $(jq -r '.Version' ".etcmc_n1/version.json") lt "2.7.0" && NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}')
   if [ "$NODEPID" ]; then
     echo "Stopping $NODEALIAS. Please wait ..."
     systemctl stop ${NAME}_$NODEALIAS.service
@@ -74,6 +75,7 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   fi
 
   NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}' | head -1) # Since version 2.7.0 there are multiple processes, get the first match.
+  dpkg --compare-versions $(jq -r '.Version' ".etcmc_n1/version.json") lt "2.7.0" && NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}')
   if [ -z "$NODEPID" ]; then
     echo "Starting $NODEALIAS."
     systemctl start ${NAME}_$NODEALIAS.service
@@ -81,5 +83,6 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   sleep 2 # wait 2 seconds
 
   NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}' | head -1) # Since version 2.7.0 there are multiple processes, get the first match.
+  dpkg --compare-versions $(jq -r '.Version' ".etcmc_n1/version.json") lt "2.7.0" && NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}')
   echo "NODEPID="$NODEPID
 done
