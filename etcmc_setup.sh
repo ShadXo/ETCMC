@@ -430,7 +430,14 @@ EOF
     echo '{"login_required": false}' > login.json
   else
     jq '.login_required = false' login.json > login_temp.json && mv login_temp.json login.json
-    #sed -i 's/"login_required": true/"login_required": false/' login.json
+  fi
+
+  # Set Auto-Start Node to true
+  echo "Setting Auto-Start Node to true"
+  if [ ! -f auto_start_status.json ]; then
+    echo '{"auto_start_enabled": true}' > auto_start_status.json
+  else
+    jq '.auto_start_enabled = true' auto_start_status.json > auto_start_status_temp.json && mv auto_start_status_temp.json auto_start_status.json
   fi
 
   if [[ ${REBOOTRESTART,,} =~ "y" ]] ; then
