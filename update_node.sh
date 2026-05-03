@@ -200,7 +200,7 @@ Type=oneshot
 RemainAfterExit=yes
 ExecStart=/bin/true
 ExecStop=/usr/bin/pkill -SIGINT -f ${NAME}_$NODEALIAS/geth
-ExecStop=/bin/sh -c 'while pgrep -f ${NAME}_$NODEALIAS/geth >/dev/null; do sleep 1; done'
+ExecStop=/bin/sh -c 'while pgrep -f "${NAME}_${NODEALIAS}[/]geth" >/dev/null; do sleep 1; done'
 TimeoutStopSec=60s
 
 [Install]

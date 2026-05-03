@@ -442,7 +442,7 @@ Type=oneshot
 RemainAfterExit=yes
 ExecStart=/bin/true
 ExecStop=/usr/bin/pkill -SIGINT -f ${NAME}_$ALIAS/geth
-ExecStop=/bin/sh -c 'while pgrep -f ${NAME}_$ALIAS/geth >/dev/null; do sleep 1; done'
+ExecStop=/bin/sh -c 'while pgrep -f "${NAME}_${ALIAS}[/]geth" >/dev/null; do sleep 1; done'
 TimeoutStopSec=60s
 
 [Install]
