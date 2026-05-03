@@ -99,6 +99,14 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+# Refuse to run if a node already exists on this host
+EXISTING_NODE=$(ls -d ~/.${NAME}_* 2>/dev/null | head -1)
+if [ -n "$EXISTING_NODE" ]; then
+  echo -e "${RED}A ${NAME^^} node already exists at $EXISTING_NODE.${NC}"
+  echo -e "${RED}Only one node per server is supported. Use the remove script first if you want to reinstall.${NC}"
+  exit 1
+fi
+
 function get_ip() {
   declare -a NODE_IPS
   for ips in $(netstat -i | awk '!/Kernel|Iface|lo/ {print $1," "}')
@@ -142,7 +150,7 @@ fi
 
 if [ -z "$EXTERNALIP" ]; then
   echo "Public IP NOT detected, exiting installer."
-  break
+  exit 1
 else
   echo "PUBLIC IP: $EXTERNALIP"
 fi
@@ -320,10 +328,10 @@ for STARTNUMBER in `seq 1 1 $MNCOUNT`; do
 
         if [ -d "$CONF_DIR" ]; then
           echo -e "${RED}$ALIAS is already used. $CONF_DIR already exists!${NC}"
-          STARTNUMBER=$[STARTNUMBER + 1]
+          STARTNUMBER=$((STARTNUMBER + 1))
         elif [ -d "$CONF_DIR0" ]; then
           echo -e "${RED}$ALIAS is already used. $CONF_DIR0 already exists!${NC}"
-          STARTNUMBER=$[STARTNUMBER + 1]
+          STARTNUMBER=$((STARTNUMBER + 1))
         else
           # OK !!!
           break
@@ -336,66 +344,44 @@ for STARTNUMBER in `seq 1 1 $MNCOUNT`; do
       exit 1
    fi
 
-   IP1=""
-   for (( ; ; ))
-   do
-     IP1=$(netstat -peanut -W | grep -i listen | grep -i $NODEIP:$PORT)
-
-     if [ -z "$IP1" ]; then
-       break
-     else
-       echo -e "${RED}IP: $NODEIP is already used for port: $PORT.${NC}"
-       if [[ ${TOR,,} =~ "y" ]] ; then
-         echo "Using TOR"
-         #NODEIP="127.0.0.1"
-         break
-       fi
-       exit
-       echo "Creating fake IP."
-       BASEIP="1.2.3."
-       IP=$BASEIP$STARTNUMBER
-       cat > /etc/netplan/${NAME}_$ALIAS.yaml <<-EOF
-# This is the network config written by 'subiquity'
-network:
-  ethernets:
-    ens160:
-      addresses:
-      - $BASEIP$STARTNUMBER/24
-  version: 2
-EOF
-    fi
-    netplan apply
-    break
-  done
   echo "IP "$IP
-  echo "PORT "$PORT
 
   if [[ ${TOR,,} =~ "y" ]]; then
-    TORPORT=$PORT
-    PORT1=""
+    TORPORT=$RPCPORT
+    TORPORT1=""
     for (( ; ; ))
     do
-      PORT1=$(netstat -peanut | grep -i listen | grep -i $TORPORT)
-
-      if [ -z "$PORT1" ]; then
+      TORPORT1=$(netstat -tlnp 2>/dev/null | awk '{print $4}' | grep -E "[:.]${TORPORT}$")
+      if [ -z "$TORPORT1" ]; then
         break
       else
-        TORPORT=$[TORPORT + 1]
+        TORPORT=$((TORPORT + 1))
       fi
     done
     echo "TORPORT "$TORPORT
   fi
 
+  PORT1=""
+  for (( ; ; ))
+  do
+    PORT1=$(netstat -tlnp 2>/dev/null | awk '{print $4}' | grep -E "[:.]${PORT}$")
+    if [ -z "$PORT1" ]; then
+      echo "PORT "$PORT
+      break
+    else
+      PORT=$((PORT + 1))
+    fi
+  done
+
   RPCPORT1=""
   for (( ; ; ))
   do
-    RPCPORT1=$(netstat -peanut | grep -i listen | grep -i $RPCPORT)
+    RPCPORT1=$(netstat -tlnp 2>/dev/null | awk '{print $4}' | grep -E "[:.]${RPCPORT}$")
     if [ -z "$RPCPORT1" ]; then
       echo "RPCPORT "$RPCPORT
       break
     else
-
-      RPCPORT=$[RPCPORT + 1]
+      RPCPORT=$((RPCPORT + 1))
     fi
   done
 
@@ -492,192 +478,6 @@ EOF
   #systemctl enable --now ${NAME}_$ALIAS.service
   fi
 
-  # Crontab to Backup Balance file every 6h
-  #0 */6 * * * cp /home/ETCMC/etcpow_balance_backup.txt.enc.bak /home/
-
-  GETHPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -i -w geth | grep -v grep | grep -v bash | awk '{print $2}')
-  NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}' | head -1) # Since version 2.7.0 there are multiple processes, get the first match.
-  if [ -z "$NODEPID" ]; then
-    # start node
-    echo "Starting $ALIAS."
-    #sh ~/bin/${NAME}d_$ALIAS.sh
-    systemctl start ${NAME}_$ALIAS.service
-    sleep 2 # wait 2 seconds
-  fi
-
-  if [ -z "$NODEPID" ] && [ "$ADDNODESURL" ]; then
-    if [ "$EXPLORERAPI" == "BLOCKBOOK" ]; then
-      if [ "$NAME" == "dogecash" ]; then
-        ADDNODES=$( curl -s https://api.dogecash.org/api/v1/network/peers | jq -r ".result" | jq -r '.[]' )
-      else
-        echo "Not tried it yet"
-      fi
-    elif [ "$EXPLORERAPI" == "DOGECASH" ]; then
-      #ADDNODES=$( wget -4qO- -o- ${ADDNODESURL} | grep 'addnode=' | shuf ) # If using Dropbox link
-      ADDNODES=$( curl -s ${ADDNODESURL} | jq -r ".result" | jq -r '.[]' )
-    elif [ "$EXPLORERAPI" == "DECENOMY" ]; then
-      ADDNODES=$( curl -s ${ADDNODESURL} | jq -r --arg PORT "$PORT" '.response | .[].addr | select( . | contains($PORT))' )
-    elif [ "$EXPLORERAPI" == "IQUIDUS" ]; then
-      ADDNODES=$( curl -s ${ADDNODESURL} | jq -r --arg PORT "$PORT" '.[] | select( .port | contains($PORT)) | .address' )
-    elif [ "$EXPLORERAPI" == "IQUIDUS-OLD" ]; then
-      ADDNODES=$( curl -s ${ADDNODESURL} | jq -r --arg PORT "$PORT" '.[].addr | select( . | contains($PORT))' )
-    else
-      echo "Unknown coin explorer, we will continue without addnodes."
-      break
-    fi
-
-    if [ "$ADDNODES" ]; then
-      sed -i '/addnode=/d' $CONF_DIR/${NAME}.conf
-      sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' $CONF_DIR/${NAME}.conf # Remove empty lines at the end
-      #echo "${ADDNODES}" | tr " " "\\n" >> $CONF_DIR/${NAME}.conf # If using Dropbox link
-      echo "${ADDNODES}" | sed "s/^/addnode=/g" >> $CONF_DIR/${NAME}.conf
-      sed -i '/addnode=localhost:56740/d' $CONF_DIR/${NAME}.conf # Remove addnode=localhost:56740 line from config, api is giving localhost back as a peer
-    else
-      echo "Empty response from coin explorer, we will continue without addnodes."
-      break
-    fi
-  fi
-
-  if [ -z "$NODEPID" ]; then
-    CHECKNODE="*"
-    echo "Checking available nodes to use for a faster sync."
-    for FILE in $(ls -d ~/.${NAME}_$CHECKNODE | sort -V); do
-      CHECKNODEALIAS=$(echo $FILE | awk -F'[_]' '{print $2}')
-      CHECKNODECONFDIR=$(echo "$HOME/.${NAME}_$CHECKNODEALIAS")
-      if [ "$CHECKNODEALIAS" != "$ALIAS" ]; then
-        echo "Checking ${CHECKNODEALIAS}."
-        if [ "$EXPLORERAPI" == "BLOCKBOOK" ]; then
-          EXPLORERLASTBLOCK=$(curl -s $EXPLORER | jq -r ".backend.blocks")
-          EXPLORERBLOCKHASH=$(curl -s $EXPLORER | jq -r ".backend.bestBlockHash")
-          EXPLORERWALLETVERSION=$(curl -s $EXPLORER | jq -r ".backend.version")
-        elif [ "$EXPLORERAPI" == "DOGECASH" ]; then
-          #BLOCKHASHCOINEXPLORER=$(curl -s https://explorer.dogec.io/api/blocks | jq -r ".backend.bestblockhash")
-          #BLOCKHASHCOINEXPLORER=$(curl -s https://dogec.flitswallet.app/api/blocks | jq -r ".backend.bestBlockHash")
-          #BLOCKHASHCOINEXPLORER=$(curl -s https://api2.dogecash.org/info | jq -r ".result.bestblockhash")
-          #LATESTWALLETVERSION=$(curl -s https://dogec.flitswallet.app/api/blocks | jq -r ".backend.version")
-          EXPLORERLASTBLOCK=$(curl -s $EXPLORER/info | jq -r ".result.blocks")
-          EXPLORERBLOCKHASH=$(curl -s $EXPLORER/info | jq -r ".result.bestblockhash")
-          EXPLORERWALLETVERSION=0 # Can't get this from https://api2.dogecash.org
-        elif [ "$EXPLORERAPI" == "DECENOMY" ]; then
-          #BLOCKHASHCOINEXPLORER=$(curl -s https://explorer.trittium.net/coreapi/v1/coins/MONK/blocks | jq -r ".response[0].blockhash")
-          #LATESTWALLETVERSION=$(curl -s https://https://explorer.decenomy.net/coreapi/v1/coins/DOGECASH?expand=overview | jq -r ".response.versions.wallet")
-          EXPLORERLASTBLOCK=$(curl -s $EXPLORER/blocks | jq -r ".response[0].height")
-          #EXPLORERLASTBLOCK=$(curl -s $EXPLORER | jq -r ".response.bestblockheight")
-          EXPLORERBLOCKHASH=$(curl -s $EXPLORER/blocks | jq -r ".response[0].blockhash")
-          EXPLORERWALLETVERSION=$(curl -s $EXPLORER?expand=overview | jq -r ".response.overview.versions.wallet")
-        elif [ "$EXPLORERAPI" == "IQUIDUS" ]; then
-          EXPLORERLASTBLOCK=$(curl -s $EXPLORER/getblockcount)
-          EXPLORERBLOCKHASH=$(curl -s $EXPLORER/getblockhash?index=$EXPLORERLASTBLOCK)
-          EXPLORERWALLETVERSION=$(curl -s $EXPLORER/getinfo | jq -r ".version")
-        elif [ "$EXPLORERAPI" == "IQUIDUS-OLD" ]; then
-          EXPLORERLASTBLOCK=$(curl -s $EXPLORER/getblockcount)
-          EXPLORERBLOCKHASH=$(curl -s $EXPLORER/getblockhash?index=$EXPLORERLASTBLOCK | sed 's/"//g')
-          EXPLORERWALLETVERSION=$(curl -s $EXPLORER/getinfo | jq -r ".version")
-        else
-          echo "Unknown coin explorer, we can't compare blockhash or walletversion."
-          break
-        fi
-
-        WALLETLASTBLOCK=$($FILE getblockcount)
-        WALLETBLOCKHASH=$($FILE getblockhash $WALLETLASTBLOCK)
-        if [ "$EXPLORERBLOCKHASH" == "$WALLETBLOCKHASH" ]; then
-          SYNCNODEALIAS=$CHECKNODEALIAS
-          SYNCNODECONFDIR=$CHECKNODECONFDIR
-          echo "*******************************************"
-          echo "Using the following node to sync faster."
-          echo "NODE ALIAS: "$SYNCNODEALIAS
-          echo "CONF FOLDER: "$SYNCNODECONFDIR
-          break
-        else
-          CHECKNODEALIAS=""
-          CHECKNODECONFDIR=""
-        fi
-      fi
-    done
-
-    # Stopping the SYNCNODE is not needed, it will break when running the install script within the boot time of the node.
-    : << 'STOPPROCESS'
-    for (( ; ; ))
-    do
-      SYNCNODEPID=`ps -ef | grep -i -w ${NAME}_$SYNCNODEALIAS | grep -i ${NAME}d | grep -v grep | awk '{print $2}'`
-      if [ -z "$SYNCNODEPID" ]; then
-        echo ""
-        break
-      else
-        #STOP
-        echo "Stopping $SYNCNODEALIAS. Please wait ..."
-        #~/bin/${NAME}-cli_$SYNCNODEALIAS.sh stop
-        systemctl stop ${NAME}d_$SYNCNODEALIAS.service
-      fi
-      #echo "Please wait ..."
-      sleep 2 # wait 2 seconds
-    done
-STOPPROCESS
-
-    if [ -z "$NODEPID" ] && [ "$SYNCNODEALIAS" ]; then
-      # Copy this Daemon.
-      echo "Copy BLOCKCHAIN from ~/.${NAME}_${SYNCNODEALIAS} to ~/.${NAME}_${ALIAS}."
-      rm -R $CONF_DIR/database &> /dev/null
-      rm -R $CONF_DIR/blocks	&> /dev/null
-      rm -R $CONF_DIR/sporks &> /dev/null
-      rm -R $CONF_DIR/chainstate &> /dev/null
-      cp -r $SYNCNODECONFDIR/database $CONF_DIR &> /dev/null
-      cp -r $SYNCNODECONFDIR/blocks $CONF_DIR &> /dev/null
-      cp -r $SYNCNODECONFDIR/sporks $CONF_DIR &> /dev/null
-      cp -r $SYNCNODECONFDIR/chainstate $CONF_DIR &> /dev/null
-    elif [ -z "$NODEPID" ] && [ "$BOOTSTRAPURL" ]; then
-      cd $CONF_DIR_TMP
-      if [ ! -f "bootstrap.tar.gz" ] && [[ $BOOTSTRAPURL == *.tar.gz ]]; then
-        echo "Downloading bootstrap"
-        wget ${BOOTSTRAPURL} -O bootstrap.tar.gz
-        WGET=$?
-      elif [ ! -f "bootstrap.zip" ] && [[ $BOOTSTRAPURL == *.zip ]]; then
-        echo "Downloading bootstrap"
-        wget ${BOOTSTRAPURL} -O bootstrap.zip
-        WGET=$?
-      else
-        echo "Bootstrap already exists, skipping download"
-      fi
-
-      #if [ $? -eq 0 ]; then
-      if [ $WGET -eq 0 ]; then
-        echo "Downloading bootstrap successful"
-        #cd ~
-        cd $CONF_DIR
-        echo "Copying BLOCKCHAIN from bootstrap without conf files"
-  	    rm -R ./database &> /dev/null
-  	    rm -R ./blocks	&> /dev/null
-  	    rm -R ./sporks &> /dev/null
-  	    rm -R ./chainstate &> /dev/null
-
-        if [[ $BOOTSTRAPURL == *.tar.gz ]]; then
-          #mv $CONF_DIR_TMP/blocks_n_chains.tar.gz .
-          #tar -xvzf blocks_n_chains.tar.gz
-          tar -xvzf $CONF_DIR_TMP/bootstrap.tar.gz -C $CONF_DIR --exclude="*.conf"
-          #rm ./blocks_n_chains.tar.gz
-        elif [[ $BOOTSTRAPURL == *.zip ]]; then
-          #mv $CONF_DIR_TMP/bootstrap.zip .
-          #unzip bootstrap.zip
-          unzip -o $CONF_DIR_TMP/bootstrap.zip -d $CONF_DIR -x "*.conf"
-          #rm ./bootstrap.zip
-        fi
-      fi
-
-    fi
-  fi
-
-  # If stopping is not needed, there is no need to start.
-  : << 'STARTPROCESS'
-  SYNCNODEPID=`ps -ef | grep -i -w ${NAME}_$SYNCNODEALIAS | grep -i ${NAME}d | grep -v grep | awk '{print $2}'`
-  if [ -z "$SYNCNODEPID" ] && [ "$SYNCNODEALIAS" ]; then
-    # start node
-    echo "Starting $SYNCNODEALIAS."
-    #sh ~/bin/${NAME}d_$SYNCNODEALIAS.sh
-    systemctl start ${NAME}d_$SYNCNODEALIAS.service
-    sleep 2 # wait 2 seconds
-  fi
-STARTPROCESS
-
   GETHPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -i -w geth | grep -v grep | grep -v bash | awk '{print $2}')
   NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${ALIAS} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}' | head -1) # Since version 2.7.0 there are multiple processes, get the first match.
   if [ -z "$NODEPID" ]; then
@@ -689,13 +489,13 @@ STARTPROCESS
   fi
 
   if [[ $IP =~ .*:.* ]]; then
-    MNCONFIG=$(echo $ALIAS [$IP]:$PORT "http://$IP:$RPCPORT")
+    MNCONFIG=$(echo Node Alias:$ALIAS Geth:[$IP]:$RPCPORT Node Portal:"http://$IP:$PORT")
   else
-    MNCONFIG=$(echo $ALIAS $IP:$PORT "http://$IP:$RPCPORT")
+    MNCONFIG=$(echo Node Alias:$ALIAS Geth:$IP:$RPCPORT Node Portal:"http://$IP:$PORT")
   fi
   echo $MNCONFIG >> ~/bin/node_config.txt
 
-  COUNTER=$[COUNTER + 1]
+  COUNTER=$((COUNTER + 1))
 done
 
 if [ -d "$CONF_DIR_TMP" ]; then

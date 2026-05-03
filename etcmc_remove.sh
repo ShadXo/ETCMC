@@ -61,8 +61,10 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   done
 
   GETHPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w geth | grep -v grep | grep -v bash | awk '{print $2}')
-  NODECHECKPID=$(ps -ef | grep -i "sh check-node.sh" | grep -v grep | awk '{print $2}') # Correct for ETCMC Nodecheck
-  if [ "$NODECHECKPID" ]; then
+  #NODECHECKPID=$(ps -ef | grep -i "sh check-node.sh" | grep -v grep | awk '{print $2}') # Correct for ETCMC Nodecheck
+  NODECHECKPID=$(systemctl show -p MainPID --value ${NAME}_$NODEALIAS-monitoring.service 2>/dev/null)
+  #if [ "$NODECHECKPID" ]; then
+  if [ "$NODECHECKPID" ] && [ "$NODECHECKPID" != "0" ]; then
     echo "Stopping $NODEALIAS monitoring. Please wait ..."
     systemctl stop ${NAME}_$NODEALIAS-monitoring.service
 
@@ -89,8 +91,9 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   rm -rdf $NODECONFDIR
 
   echo "Removing systemd service"
-  rm /etc/systemd/system/${NAME}_$NODEALIAS-monitoring.service
-  rm /etc/systemd/system/${NAME}_$NODEALIAS.service
+  rm -f /etc/systemd/system/${NAME}_$NODEALIAS-monitoring.service
+  rm -f /etc/systemd/system/${NAME}_$NODEALIAS-geth.service
+  rm -f /etc/systemd/system/${NAME}_$NODEALIAS.service
   systemctl daemon-reload
 
   echo "Node $NODEALIAS removed"
