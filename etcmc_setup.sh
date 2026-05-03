@@ -448,15 +448,19 @@ EOF
     cat << EOF > /etc/systemd/system/${NAME}_$ALIAS-geth.service
 [Unit]
 Description=Service for ${NAME}_$ALIAS to shutdown geth
-DefaultDependencies=no
-Before=shutdown.target reboot.target halt.target
+After=${NAME}_$ALIAS.service
+BindsTo=${NAME}_$ALIAS.service
 
 [Service]
 Type=oneshot
-ExecStart=pkill -SIGINT -f ${NAME}_$ALIAS/geth
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/usr/bin/pkill -SIGINT -f ${NAME}_$ALIAS/geth
+ExecStop=/bin/sh -c 'while pgrep -f ${NAME}_$ALIAS/geth >/dev/null; do sleep 1; done'
+TimeoutStopSec=60s
 
 [Install]
-WantedBy=halt.target reboot.target shutdown.target
+WantedBy=${NAME}_$ALIAS.service
 EOF
 
     echo "Creating systemd service for ${NAME}_$ALIAS"
@@ -483,8 +487,8 @@ WantedBy=multi-user.target
 EOF
   systemctl daemon-reload
   sleep 2 # wait 2 seconds
+  systemctl enable ${NAME}_$ALIAS-geth.service
   systemctl enable ${NAME}_$ALIAS.service
-  systemctl start ${NAME}_$ALIAS.service
   #systemctl enable --now ${NAME}_$ALIAS.service
   fi
 

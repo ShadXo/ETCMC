@@ -192,15 +192,19 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   cat << EOF > /etc/systemd/system/${NAME}_$NODEALIAS-geth.service
 [Unit]
 Description=Service for ${NAME}_$NODEALIAS to shutdown geth
-DefaultDependencies=no
-Before=shutdown.target reboot.target halt.target
+After=${NAME}_$NODEALIAS.service
+BindsTo=${NAME}_$NODEALIAS.service
 
 [Service]
 Type=oneshot
-ExecStart=pkill -SIGINT -f ${NAME}_$NODEALIAS/geth
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/usr/bin/pkill -SIGINT -f ${NAME}_$NODEALIAS/geth
+ExecStop=/bin/sh -c 'while pgrep -f ${NAME}_$NODEALIAS/geth >/dev/null; do sleep 1; done'
+TimeoutStopSec=60s
 
 [Install]
-WantedBy=halt.target reboot.target shutdown.target
+WantedBy=${NAME}_$NODEALIAS.service
 EOF
 
 echo "Updating systemd service for ${NAME}_$NODEALIAS"
