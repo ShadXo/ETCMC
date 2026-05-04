@@ -114,11 +114,13 @@ rm update.tar.gz update.zip &> /dev/null
 for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   NODEALIAS=$(echo $FILE | awk -F'[_]' '{print $2}')
   NODECONFDIR=~/.${NAME}_${NODEALIAS}
-  NODEVERSION=$(jq -r '.Version' ${NODECONFDIR}/version.json)
+  NODEVERSION=$(jq -r '.Version' ${NODECONFDIR}/version.json 2>/dev/null)
 
   # Compare the versions using dpkg
-  if dpkg --compare-versions "$NODEVERSION" lt "$VERSION"; then
+  if [ -n "$NODEVERSION" ] && dpkg --compare-versions "$NODEVERSION" lt "$VERSION"; then
     echo "$NODEALIAS is running a lower node version $NODEVERSION, updating this node to the latest version $VERSION."
+  elif [ -z "$NODEVERSION" ] || [ "$NODEVERSION" = "null" ]; then
+    echo "$NODEALIAS has no readable version (missing or invalid version.json), updating this node to the latest version $VERSION."
   elif [ "$NODEVERSION" = "$VERSION" ]; then
     echo "$NODEALIAS is already running the latest version $VERSION. Skipping this node."
     break
@@ -140,7 +142,6 @@ for FILE in $(ls -d ~/.${NAME}_$ALIAS | sort -V); do
   fi
 
   NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ${NAME}_${NODEALIAS} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}' | head -1) # Since version 2.7.0 there are multiple processes, get the first match.
-  dpkg --compare-versions $(jq -r '.Version' "$NODECONFDIR/version.json") lt "2.7.0" && NODEPID=$(ps -ef | grep -i ${NAME} | grep -i -w ETCMC_GETH | grep -v grep | awk '{print $2}')
   if [ "$NODEPID" ]; then
     echo "Stopping $NODEALIAS. Please wait ..."
     systemctl stop ${NAME}_$NODEALIAS.service
